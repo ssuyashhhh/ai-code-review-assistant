@@ -9,44 +9,171 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const LANGUAGES = [
   { value: "python",     label: "Python" },
-  { value: "cpp",        label: "C++" },
   { value: "javascript", label: "JavaScript" },
+  { value: "typescript", label: "TypeScript" },
   { value: "java",       label: "Java" },
+  { value: "c",          label: "C" },
+  { value: "cpp",        label: "C++" },
+  { value: "csharp",     label: "C#" },
+  { value: "go",         label: "Go" },
+  { value: "rust",       label: "Rust" },
+  { value: "ruby",       label: "Ruby" },
+  { value: "php",        label: "PHP" },
+  { value: "swift",      label: "Swift" },
+  { value: "kotlin",     label: "Kotlin" },
+  { value: "scala",      label: "Scala" },
+  { value: "dart",       label: "Dart" },
+  { value: "r",          label: "R" },
+  { value: "sql",        label: "SQL" },
+  { value: "shell",      label: "Shell/Bash" },
+  { value: "perl",       label: "Perl" },
+  { value: "lua",        label: "Lua" },
+  { value: "haskell",    label: "Haskell" },
+  { value: "html",       label: "HTML" },
+  { value: "css",        label: "CSS" },
 ];
 
 const EXT_MAP = {
-  py: "python", cpp: "cpp", cc: "cpp", cxx: "cpp", h: "cpp",
-  js: "javascript", mjs: "javascript", java: "java",
+  py: "python",
+  js: "javascript", mjs: "javascript", jsx: "javascript",
+  ts: "typescript", tsx: "typescript",
+  java: "java",
+  c: "c",
+  cpp: "cpp", cc: "cpp", cxx: "cpp", h: "c", hpp: "cpp", hxx: "cpp",
+  cs: "csharp",
+  go: "go",
+  rs: "rust",
+  rb: "ruby",
+  php: "php",
+  swift: "swift",
+  kt: "kotlin", kts: "kotlin",
+  scala: "scala", sc: "scala",
+  dart: "dart",
+  r: "r", R: "r",
+  sql: "sql",
+  sh: "shell", bash: "shell", zsh: "shell",
+  pl: "perl", pm: "perl",
+  lua: "lua",
+  hs: "haskell", lhs: "haskell",
+  html: "html", htm: "html",
+  css: "css", scss: "css",
 };
 
 // ── Auto-detect language from code content ───────────────────────────────────
 function detectLanguage(code) {
   if (!code || !code.trim()) return null;
-  const s = code.slice(0, 1500); // only scan the first 1500 chars for speed
+  const s = code.slice(0, 2000); // scan first 2000 chars for speed
 
-  // C++ signals
-  if (/^\s*#include\s*[<"]/.test(s))              return "cpp";
+  // ── Shell / Bash ──────────────────────────────────────────────────────────
+  if (/^#!.*\b(bash|sh|zsh)\b/.test(s))            return "shell";
+
+  // ── HTML ──────────────────────────────────────────────────────────────────
+  if (/^\s*<!DOCTYPE\s+html/i.test(s))             return "html";
+  if (/^\s*<html[\s>]/i.test(s))                   return "html";
+
+  // ── CSS ───────────────────────────────────────────────────────────────────
+  if (/^\s*[.#@][\w-]+\s*\{/m.test(s) && !/\bfunction\b/.test(s)) return "css";
+
+  // ── SQL ───────────────────────────────────────────────────────────────────
+  if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE)\b/im.test(s)) return "sql";
+
+  // ── Rust ──────────────────────────────────────────────────────────────────
+  if (/\bfn\s+\w+\s*\(/.test(s) && /->/.test(s))  return "rust";
+  if (/\blet\s+mut\b/.test(s))                     return "rust";
+  if (/\buse\s+std::/.test(s))                     return "rust";
+  if (/\bprintln!\s*\(/.test(s))                   return "rust";
+  if (/\bimpl\s+\w+/.test(s) && /\bfn\b/.test(s))  return "rust";
+
+  // ── Go ────────────────────────────────────────────────────────────────────
+  if (/\bpackage\s+main\b/.test(s))                return "go";
+  if (/\bfunc\s+\w+\s*\(/.test(s) && /\bpackage\b/.test(s)) return "go";
+  if (/\bimport\s+\(/.test(s) && /\bfmt\b/.test(s)) return "go";
+  if (/\bfmt\.Print/.test(s))                       return "go";
+
+  // ── Kotlin ────────────────────────────────────────────────────────────────
+  if (/\bfun\s+main\s*\(/.test(s))                 return "kotlin";
+  if (/\bfun\s+\w+\s*\(/.test(s) && /\bval\b/.test(s)) return "kotlin";
+  if (/\bprintln\s*\(/.test(s) && /\bfun\b/.test(s)) return "kotlin";
+
+  // ── Swift ─────────────────────────────────────────────────────────────────
+  if (/\bimport\s+Foundation\b/.test(s))           return "swift";
+  if (/\bimport\s+UIKit\b/.test(s))                return "swift";
+  if (/\bfunc\s+\w+\s*\(/.test(s) && /\bvar\b/.test(s) && /->/.test(s)) return "swift";
+  if (/\bguard\s+let\b/.test(s))                   return "swift";
+
+  // ── Dart ──────────────────────────────────────────────────────────────────
+  if (/\bimport\s+'package:/.test(s))              return "dart";
+  if (/\bvoid\s+main\s*\(/.test(s) && /\bprint\s*\(/.test(s) && !/System/.test(s)) return "dart";
+
+  // ── Scala ─────────────────────────────────────────────────────────────────
+  if (/\bobject\s+\w+\s*(extends)?/.test(s) && /\bdef\s+main/.test(s)) return "scala";
+  if (/\bval\s+\w+\s*:/.test(s) && /\bdef\b/.test(s) && !/\bfun\b/.test(s)) return "scala";
+
+  // ── Haskell ───────────────────────────────────────────────────────────────
+  if (/\bmodule\s+Main\b/.test(s))                 return "haskell";
+  if (/\b::\s*\[?[A-Z]\w*/.test(s) && /\bwhere\b/.test(s)) return "haskell";
+  if (/\bmain\s*=\s*do\b/.test(s))                 return "haskell";
+
+  // ── R ─────────────────────────────────────────────────────────────────────
+  if (/\blibrary\s*\(/.test(s))                    return "r";
+  if (/<-\s*function\s*\(/.test(s))                return "r";
+  if (/\bdata\.frame\s*\(/.test(s))                 return "r";
+
+  // ── Perl ──────────────────────────────────────────────────────────────────
+  if (/^#!.*\bperl\b/.test(s))                     return "perl";
+  if (/\buse\s+strict\b/.test(s))                  return "perl";
+  if (/\bmy\s+\$\w+/.test(s))                      return "perl";
+
+  // ── Lua ───────────────────────────────────────────────────────────────────
+  if (/\blocal\s+\w+\s*=/.test(s) && /\bend\b/.test(s)) return "lua";
+  if (/\bfunction\s+\w+\s*\(/.test(s) && /\bend\b/.test(s) && !/\bdef\b/.test(s)) return "lua";
+
+  // ── PHP ───────────────────────────────────────────────────────────────────
+  if (/^\s*<\?php/m.test(s))                       return "php";
+  if (/\$\w+\s*=/.test(s) && /\bfunction\b/.test(s) && /;\s*$/.test(s)) return "php";
+
+  // ── C# ────────────────────────────────────────────────────────────────────
+  if (/\busing\s+System\b/.test(s))                return "csharp";
+  if (/\bnamespace\s+\w+/.test(s) && /\bclass\b/.test(s) && /\bvoid\b/.test(s)) return "csharp";
+  if (/\bConsole\.(Write|ReadLine)/.test(s))        return "csharp";
+  if (/\bstring\[\]\s+args\b/.test(s))              return "csharp";
+
+  // ── C++ (before C, since C++ is a superset) ───────────────────────────────
   if (/\busing\s+namespace\b/.test(s))             return "cpp";
   if (/\bcout\s*<</.test(s))                       return "cpp";
   if (/\bstd::/.test(s))                           return "cpp";
-  if (/\bint\s+main\s*\(/.test(s) && /\b(cout|cin|printf)\b/.test(s)) return "cpp";
+  if (/\bcin\s*>>/.test(s))                        return "cpp";
+  if (/\bclass\s+\w+\s*\{/m.test(s) && /\b(public|private|protected)\s*:/.test(s)) return "cpp";
+  if (/^\s*#include\s*<\w+>/.test(s) && /\b(cout|cin|vector|string|map)\b/.test(s)) return "cpp";
 
-  // Java signals
+  // ── C ─────────────────────────────────────────────────────────────────────
+  if (/^\s*#include\s*[<"]/.test(s))               return "c";
+  if (/\bint\s+main\s*\(/.test(s) && /\bprintf\s*\(/.test(s)) return "c";
+  if (/\bprintf\s*\(/.test(s) && /\b(int|char|void)\b/.test(s)) return "c";
+  if (/\bmalloc\s*\(/.test(s))                     return "c";
+
+  // ── TypeScript ────────────────────────────────────────────────────────────
+  if (/\binterface\s+\w+\s*\{/.test(s) && !/\bpublic\s+class\b/.test(s)) return "typescript";
+  if (/:\s*(string|number|boolean|any)\b/.test(s) && /\b(const|let|function)\b/.test(s)) return "typescript";
+  if (/\bimport\s+.*\bfrom\s+['"]/.test(s) && /:\s*\w+/.test(s)) return "typescript";
+  if (/\benum\s+\w+\s*\{/.test(s) && /\bexport\b/.test(s)) return "typescript";
+
+  // ── Java ──────────────────────────────────────────────────────────────────
   if (/\bpublic\s+class\b/.test(s))                return "java";
   if (/\bSystem\.out\.print/.test(s))               return "java";
   if (/\bimport\s+java\./.test(s))                  return "java";
   if (/\bpublic\s+static\s+void\s+main\b/.test(s)) return "java";
 
-  // Python signals
-  if (/^\s*def\s+\w+\s*\(/.test(s))                return "python";
-  if (/^\s*import\s+\w+/.test(s))                  return "python";
-  if (/^\s*from\s+\w+\s+import\b/.test(s))         return "python";
+  // ── Python ────────────────────────────────────────────────────────────────
+  if (/^\s*def\s+\w+\s*\(/m.test(s))               return "python";
+  if (/^\s*import\s+\w+/m.test(s))                 return "python";
+  if (/^\s*from\s+\w+\s+import\b/m.test(s))        return "python";
   if (/^\s*class\s+\w+.*:/m.test(s))               return "python";
-  if (/\bprint\s*\(/.test(s) && !/console/.test(s)) return "python";
+  if (/\bprint\s*\(/.test(s) && !/console/.test(s) && !/println/.test(s)) return "python";
   if (/\bself\./.test(s))                           return "python";
   if (/\belif\b/.test(s))                           return "python";
 
-  // JavaScript signals
+  // ── JavaScript (fallback for generic JS patterns) ─────────────────────────
   if (/\bconsole\.(log|error|warn)\b/.test(s))     return "javascript";
   if (/\b(const|let|var)\s+\w+\s*=/.test(s))       return "javascript";
   if (/\bfunction\s+\w+\s*\(/.test(s) && !/\bdef\b/.test(s)) return "javascript";
@@ -67,23 +194,16 @@ const DEFAULT_CODE = {
     return max_val
 
 print(find_max([3, 1, 4, 1, 5, 9, 2, 6]))`,
-  cpp: `#include <iostream>
-using namespace std;
-
-int findMax(int arr[], int n) {
-    int max = 0;
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < n; j++)
-            if (arr[i] > max) max = arr[i];
-    return max;
-}
-
-int main() {
-    int arr[] = {3, 1, 4, 1, 5, 9};
-    cout << findMax(arr, 6) << endl;
-}`,
   javascript: `function findMax(arr) {
   let maxVal = 0;
+  for (let i = 0; i < arr.length; i++)
+    for (let j = 0; j < arr.length; j++)
+      if (arr[i] > maxVal) maxVal = arr[i];
+  return maxVal;
+}
+console.log(findMax([3, 1, 4, 1, 5, 9]));`,
+  typescript: `function findMax(arr: number[]): number {
+  let maxVal: number = 0;
   for (let i = 0; i < arr.length; i++)
     for (let j = 0; j < arr.length; j++)
       if (arr[i] > maxVal) maxVal = arr[i];
@@ -102,6 +222,225 @@ console.log(findMax([3, 1, 4, 1, 5, 9]));`,
         int[] arr = {3, 1, 4, 1, 5, 9};
         System.out.println(findMax(arr));
     }
+}`,
+  c: `#include <stdio.h>
+
+int findMax(int arr[], int n) {
+    int max = 0;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            if (arr[i] > max) max = arr[i];
+    return max;
+}
+
+int main() {
+    int arr[] = {3, 1, 4, 1, 5, 9};
+    printf("%d\\n", findMax(arr, 6));
+    return 0;
+}`,
+  cpp: `#include <iostream>
+using namespace std;
+
+int findMax(int arr[], int n) {
+    int max = 0;
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            if (arr[i] > max) max = arr[i];
+    return max;
+}
+
+int main() {
+    int arr[] = {3, 1, 4, 1, 5, 9};
+    cout << findMax(arr, 6) << endl;
+}`,
+  csharp: `using System;
+
+class Program {
+    static int FindMax(int[] arr) {
+        int max = 0;
+        for (int i = 0; i < arr.Length; i++)
+            for (int j = 0; j < arr.Length; j++)
+                if (arr[i] > max) max = arr[i];
+        return max;
+    }
+    static void Main() {
+        int[] arr = {3, 1, 4, 1, 5, 9};
+        Console.WriteLine(FindMax(arr));
+    }
+}`,
+  go: `package main
+
+import "fmt"
+
+func findMax(arr []int) int {
+    max := 0
+    for i := 0; i < len(arr); i++ {
+        for j := 0; j < len(arr); j++ {
+            if arr[i] > max {
+                max = arr[i]
+            }
+        }
+    }
+    return max
+}
+
+func main() {
+    arr := []int{3, 1, 4, 1, 5, 9}
+    fmt.Println(findMax(arr))
+}`,
+  rust: `fn find_max(arr: &[i32]) -> i32 {
+    let mut max = 0;
+    for i in 0..arr.len() {
+        for _j in 0..arr.len() {
+            if arr[i] > max {
+                max = arr[i];
+            }
+        }
+    }
+    max
+}
+
+fn main() {
+    let arr = vec![3, 1, 4, 1, 5, 9];
+    println!("{}", find_max(&arr));
+}`,
+  ruby: `def find_max(arr)
+  max = 0
+  arr.each do |i|
+    arr.each do |_j|
+      max = i if i > max
+    end
+  end
+  max
+end
+
+puts find_max([3, 1, 4, 1, 5, 9])`,
+  php: `<?php
+function findMax($arr) {
+    $max = 0;
+    for ($i = 0; $i < count($arr); $i++)
+        for ($j = 0; $j < count($arr); $j++)
+            if ($arr[$i] > $max) $max = $arr[$i];
+    return $max;
+}
+
+echo findMax([3, 1, 4, 1, 5, 9]);
+?>`,
+  swift: `func findMax(_ arr: [Int]) -> Int {
+    var max = 0
+    for i in 0..<arr.count {
+        for _ in 0..<arr.count {
+            if arr[i] > max { max = arr[i] }
+        }
+    }
+    return max
+}
+
+print(findMax([3, 1, 4, 1, 5, 9]))`,
+  kotlin: `fun findMax(arr: IntArray): Int {
+    var max = 0
+    for (i in arr.indices)
+        for (j in arr.indices)
+            if (arr[i] > max) max = arr[i]
+    return max
+}
+
+fun main() {
+    val arr = intArrayOf(3, 1, 4, 1, 5, 9)
+    println(findMax(arr))
+}`,
+  scala: `object Main extends App {
+  def findMax(arr: Array[Int]): Int = {
+    var max = 0
+    for (i <- arr.indices)
+      for (_ <- arr.indices)
+        if (arr(i) > max) max = arr(i)
+    max
+  }
+  println(findMax(Array(3, 1, 4, 1, 5, 9)))
+}`,
+  dart: `int findMax(List<int> arr) {
+  int max = 0;
+  for (int i = 0; i < arr.length; i++)
+    for (int j = 0; j < arr.length; j++)
+      if (arr[i] > max) max = arr[i];
+  return max;
+}
+
+void main() {
+  print(findMax([3, 1, 4, 1, 5, 9]));
+}`,
+  r: `find_max <- function(arr) {
+  max_val <- 0
+  for (i in seq_along(arr)) {
+    for (j in seq_along(arr)) {
+      if (arr[i] > max_val) max_val <- arr[i]
+    }
+  }
+  max_val
+}
+
+print(find_max(c(3, 1, 4, 1, 5, 9)))`,
+  sql: `-- Example: Find the maximum value from a table
+SELECT MAX(value) AS max_value
+FROM numbers;`,
+  shell: `#!/bin/bash
+
+arr=(3 1 4 1 5 9)
+max=0
+for i in "\${arr[@]}"; do
+  for j in "\${arr[@]}"; do
+    if [ "$i" -gt "$max" ]; then
+      max=$i
+    fi
+  done
+done
+echo $max`,
+  perl: `use strict;
+use warnings;
+
+my @arr = (3, 1, 4, 1, 5, 9);
+my $max = 0;
+for my $i (@arr) {
+    for my $j (@arr) {
+        $max = $i if $i > $max;
+    }
+}
+print "$max\\n";`,
+  lua: `local function findMax(arr)
+  local max = 0
+  for i = 1, #arr do
+    for j = 1, #arr do
+      if arr[i] > max then max = arr[i] end
+    end
+  end
+  return max
+end
+
+print(findMax({3, 1, 4, 1, 5, 9}))`,
+  haskell: `findMax :: [Int] -> Int
+findMax [] = 0
+findMax (x:xs) = if x > findMax xs then x else findMax xs
+
+main :: IO ()
+main = print (findMax [3, 1, 4, 1, 5, 9])`,
+  html: `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hello World</title>
+</head>
+<body>
+  <h1>Hello, World!</h1>
+</body>
+</html>`,
+  css: `/* Example styles */
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea, #764ba2);
 }`,
 };
 
@@ -203,7 +542,10 @@ export default function Home() {
   // ── GitHub: file fetched → populate editor → switch tab ─────────────────
   const onGithubFileFetched = (fetchedCode, fetchedLang) => {
     setCode(fetchedCode);
-    setLanguage(LANGUAGES.find(l => l.value === fetchedLang) ? fetchedLang : "python");
+    // Accept any language the backend returns; fall back to auto-detect or python
+    const knownLang = LANGUAGES.find(l => l.value === fetchedLang);
+    const detected  = detectLanguage(fetchedCode);
+    setLanguage(knownLang ? fetchedLang : detected || "python");
     setReview(null);
     setError(null);
     setTab("editor");
@@ -220,7 +562,7 @@ export default function Home() {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".py,.cpp,.cc,.cxx,.h,.js,.mjs,.java"
+        accept=".py,.js,.mjs,.jsx,.ts,.tsx,.java,.c,.cpp,.cc,.cxx,.h,.hpp,.hxx,.cs,.go,.rs,.rb,.php,.swift,.kt,.kts,.scala,.sc,.dart,.r,.R,.sql,.sh,.bash,.zsh,.pl,.pm,.lua,.hs,.lhs,.html,.htm,.css,.scss"
         className="hidden"
         onChange={onFileChange}
       />
@@ -316,7 +658,7 @@ export default function Home() {
                         <div className="w-3 h-3 rounded-full bg-emerald-500/80" />
                       </div>
                       <span className="text-xs text-slate-500 ml-1 font-mono">
-                        {LANGUAGES.find(l => l.value === language)?.label} · {code.split("\n").length} lines
+                        {LANGUAGES.find(l => l.value === language)?.label || language} · {code.split("\n").length} lines
                       </span>
                     </div>
                     <CodeEditor language={language} value={code} onChange={onCodeChange} />

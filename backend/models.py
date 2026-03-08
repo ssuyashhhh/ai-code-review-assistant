@@ -20,7 +20,7 @@ class CodeReviewRequest(BaseModel):
     code: str = Field(..., min_length=1, description="Source code to review.")
     language: str = Field(
         ..., min_length=1,
-        description="Programming language (python | cpp | javascript | java).",
+        description="Programming language (e.g. python, javascript, typescript, java, c, cpp, csharp, go, rust, ruby, php, swift, kotlin, scala, dart, r, sql, shell, perl, lua, haskell, html, css).",
     )
 
 
