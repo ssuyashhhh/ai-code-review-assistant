@@ -119,6 +119,17 @@ function detectLanguage(code) {
   if (/<-\s*function\s*\(/.test(s))                return "r";
   if (/\bdata\.frame\s*\(/.test(s))                 return "r";
 
+  // ── Ruby ──────────────────────────────────────────────────────────────────
+  if (/^#!.*\bruby\b/.test(s))                     return "ruby";
+  if (/\bputs\s+/.test(s) && /\bend\b/.test(s))    return "ruby";
+  if (/\bdef\s+\w+/.test(s) && /\bend\b/m.test(s) && !/\bclass\s+\w+.*:/m.test(s)) return "ruby";
+  if (/\brequire\s+['"]/.test(s) && /\bend\b/.test(s)) return "ruby";
+  if (/\battr_(accessor|reader|writer)\b/.test(s)) return "ruby";
+  if (/\bdo\s*\|/.test(s) && /\bend\b/.test(s))    return "ruby";
+  if (/\bputs\b/.test(s) && /\bdef\b/.test(s))     return "ruby";
+  if (/\.each\s+do\b/.test(s))                     return "ruby";
+  if (/\bclass\s+\w+\s*<\s*\w+/.test(s) && /\bend\b/.test(s)) return "ruby";
+
   // ── Perl ──────────────────────────────────────────────────────────────────
   if (/^#!.*\bperl\b/.test(s))                     return "perl";
   if (/\buse\s+strict\b/.test(s))                  return "perl";
