@@ -13,8 +13,9 @@ A full-stack production-ready application that lets you paste code, send it to *
 - 🔄 **PR Review Bot** — submit a GitHub Pull Request URL for AI-powered diff review
 - 💡 **Optimized Code** — AI generates a complete rewritten version with all fixes applied
 - 🛡️ **Rate Limiting** — 5 requests/minute per IP via SlowAPI
-- 🔁 **Retry Logic** — auto-retries on 429 errors (3 retries, 20s delay)
-- ✂️ **Input Truncation** — caps code at 3000 chars to stay within token limits
+- 🔁 **Retry Logic** — auto-retries on 429 errors (3 retries, 5s delay)
+- ✂️ **Input Truncation** — caps code at 6000 chars to stay within token limits
+- ⚡ **Async Streaming** — async HTTP via httpx with SSE streaming for faster responses
 
 ---
 
@@ -53,7 +54,7 @@ ai-code-review-assistant/
 | Layer     | Technology                          |
 |-----------|-------------------------------------|
 | Frontend  | Next.js, React, Tailwind CSS, Monaco Editor |
-| Backend   | Python, FastAPI, Uvicorn, Pydantic  |
+| Backend   | Python, FastAPI, Uvicorn, Pydantic, httpx |
 | AI        | OpenRouter API (DeepSeek model)     |
 | Security  | SlowAPI (rate limiting), python-dotenv |
 

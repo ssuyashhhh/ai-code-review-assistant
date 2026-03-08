@@ -11,8 +11,8 @@ Endpoints:
 
 Security features:
   • SlowAPI rate limiting (5 req/min per IP on /review)
-  • Input truncation (3000 chars max in llm_service)
-  • Retry logic (3 retries, 20s delay on 429 errors)
+  • Input truncation (6000 chars max in llm_service)
+  • Retry logic (3 retries, 5s delay on 429 errors)
   • Structured error responses { status: "error", message: "..." }
 """
 

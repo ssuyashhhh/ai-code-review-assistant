@@ -10,12 +10,18 @@ env/
 # Secrets — never commit
 .env
 .env.local
+.env.production
 
 # Node / Next.js
 node_modules/
 .next/
 out/
 
+# IDE
+.vscode/
+.idea/
+
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
