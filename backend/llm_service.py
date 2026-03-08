@@ -219,7 +219,6 @@ async def _call_llm_with_retry(
         "top_p": 0.95,                # Slightly constrain sampling for consistency
         "max_tokens": 2048,           # Cap output length for faster generation
         "stream": True,               # Stream tokens for faster time-to-first-token
-        "response_format": {"type": "json_object"},  # Enforce JSON output
     }
 
     last_error: Exception | None = None
