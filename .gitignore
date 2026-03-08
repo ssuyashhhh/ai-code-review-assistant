@@ -7,8 +7,14 @@ __pycache__/
 venv/
 env/
 
-# Env files — never commit real secrets
+# Secrets — never commit
 .env
+.env.local
+
+# Node / Next.js
+node_modules/
+.next/
+out/
 
 # OS
 .DS_Store

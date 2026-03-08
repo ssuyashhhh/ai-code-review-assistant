@@ -1,168 +1,168 @@
-# 🤖 AI Code Review Assistant — Backend
+# 🤖 AI Code Review Assistant
 
-A **FastAPI** backend that sends source code to **OpenAI GPT** and returns a fully structured code review.
+A full-stack production-ready application that lets you paste code, send it to **Google Gemini**, and receive a detailed structured review — bugs, time/space complexity, optimizations, and clean code suggestions.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-code review/
-├── main.py            # FastAPI app — OpenAI integration + structured review
-├── requirements.txt   # Python dependencies
-├── .env               # Secret env vars (OPENAI_API_KEY) — never commit
-├── .env.example       # Safe template to commit
-└── .gitignore         # Excludes .env and cache
+ai-code-review-assistant/
+├── backend/
+│   ├── main.py          # FastAPI app + endpoints
+│   ├── llm_service.py   # Gemini API client + prompt builder
+│   ├── models.py        # Pydantic request/response models
+│   ├── requirements.txt
+│   ├── .env             # Your secrets (not committed)
+│   └── .env.example
+└── frontend/
+    ├── components/
+    │   ├── CodeEditor.jsx   # Monaco editor (VS Code)
+    │   └── ReviewPanel.jsx  # Structured review display
+    ├── pages/
+    │   ├── _app.js
+    │   └── index.js         # Main split-pane layout
+    ├── styles/
+    │   └── globals.css
+    ├── package.json
+    ├── tailwind.config.js
+    └── .env.local.example
 ```
 
 ---
 
-## ⚙️ Setup & Installation
+## ⚙️ Setup
 
-### 1. Create and activate a virtual environment
+### Backend
 
 ```bash
-# Windows (PowerShell)
+cd backend
+
+# 1. Create and activate a virtual environment (recommended)
 python -m venv venv
-.\venv\Scripts\Activate.ps1
+.\venv\Scripts\Activate.ps1    # Windows
+# source venv/bin/activate     # macOS/Linux
 
-# macOS / Linux
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 2. Install dependencies
-
-```bash
+# 2. Install dependencies
 pip install -r requirements.txt
+
+# 3. Create your .env
+copy .env.example .env         # Windows
+# cp .env.example .env         # macOS/Linux
+
+# 4. Add your Gemini API key to .env
+# GEMINI_API_KEY=AIzaSy...
+# Get a key at https://aistudio.google.com/apikey
 ```
 
-### 3. Add your OpenAI API key
+### Frontend
 
 ```bash
-copy .env.example .env    # Windows
-cp .env.example .env      # macOS / Linux
-```
+cd frontend
 
-Open `.env` and replace the placeholder:
+# 1. Install dependencies
+npm install
 
-```
-OPENAI_API_KEY=sk-...your-real-key-here...
-OPENAI_MODEL=gpt-4o          # optional — defaults to gpt-4o
+# 2. Create .env.local
+copy .env.local.example .env.local
+# (default NEXT_PUBLIC_API_URL=http://localhost:8000 is fine for local dev)
 ```
 
 ---
 
-## ▶️ Running the Server
+## ▶️ Running Locally
 
+Open **two terminals**:
+
+**Terminal 1 — Backend**
 ```bash
+cd backend
 python -m uvicorn main:app --reload
+# → http://localhost:8000
+# → http://localhost:8000/docs  (Swagger UI)
 ```
 
-| URL | Purpose |
-|-----|---------|
-| `http://127.0.0.1:8000/` | Health check |
-| `http://127.0.0.1:8000/docs` | Interactive Swagger UI |
-| `http://127.0.0.1:8000/redoc` | ReDoc documentation |
-
----
-
-## 🧪 Testing the Endpoint
-
-### Option A — Swagger UI (easiest)
-
-1. Navigate to `http://127.0.0.1:8000/docs`
-2. Click `POST /review` → **Try it out**
-3. Paste the request body below and click **Execute**
-
-### Option B — PowerShell
-
-```powershell
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/review" `
-  -Method POST `
-  -ContentType "application/json" `
-  -Body '{
-    "code": "def find_max(lst):\n    max_val = 0\n    for i in range(len(lst)):\n        for j in range(len(lst)):\n            if lst[i] > max_val:\n                max_val = lst[i]\n    return max_val",
-    "language": "python"
-  }'
-```
-
-### Option C — curl
-
+**Terminal 2 — Frontend**
 ```bash
-curl -X POST http://127.0.0.1:8000/review \
-  -H "Content-Type: application/json" \
-  -d '{
-    "code": "def find_max(lst):\n    max_val = 0\n    for i in range(len(lst)):\n        for j in range(len(lst)):\n            if lst[i] > max_val:\n                max_val = lst[i]\n    return max_val",
-    "language": "python"
-  }'
+cd frontend
+npm run dev
+# → http://localhost:3000
 ```
+
+Open **http://localhost:3000** in your browser.
 
 ---
 
-## 📦 Request & Response Format
+## 🧪 How to Use
 
-### Request Body
+1. Select a programming language (Python, C++, JavaScript, Java)
+2. Paste or write code in the Monaco editor
+3. Click **⚡ Analyze Code**
+4. View the AI review:
+   - 🐛 **Bug Detection** — with severity (high/medium/low) and fix suggestions
+   - ⏱️ **Time Complexity** — Big-O analysis
+   - 💾 **Space Complexity** — Big-O analysis
+   - ⚡ **Performance Improvements**
+   - ✨ **Clean Code Suggestions**
+   - 📋 **Overall Summary**
 
+---
+
+## 🔌 API Reference
+
+### `GET /`
 ```json
-{
-  "code": "def find_max(lst): ...",
-  "language": "python"
-}
+{ "message": "AI Code Review Assistant API", "ready": true, "model": "gemini-2.0-flash-lite" }
 ```
 
-### ✅ Success Response `200 OK`
-
+### `POST /review`
+**Request:**
+```json
+{ "code": "def find_max(lst): ...", "language": "python" }
+```
+**Response:**
 ```json
 {
   "status": "success",
   "language": "python",
-  "model_used": "gpt-4o",
-  "bugs": [
-    {
-      "line": "2",
-      "description": "Initialising max_val to 0 causes incorrect results for all-negative lists.",
-      "severity": "high",
-      "suggestion": "Use float('-inf') or lst[0] as the initial value."
-    }
-  ],
-  "time_complexity": "O(n²) — the nested loop iterates over the entire list twice, but the inner loop does no useful work. Can be reduced to O(n).",
-  "optimizations": [
-    "Eliminate the inner loop entirely — only one pass is needed.",
-    "Use Python's built-in max() for an idiomatic O(n) solution."
-  ],
-  "clean_code": [
-    "Rename lst to numbers or values for clarity.",
-    "Add a guard for empty input and raise ValueError with a descriptive message."
-  ],
-  "overall_summary": "The function has a critical bug with negative numbers and an unnecessary nested loop making it O(n²). Replacing the double-loop with a single pass and fixing the initialisation are the top priorities."
+  "model_used": "gemini-2.0-flash-lite",
+  "bugs": [{ "line": "2", "description": "...", "severity": "high", "suggestion": "..." }],
+  "time_complexity": "O(n²) — ...",
+  "space_complexity": "O(1) — ...",
+  "optimizations": ["Use Python's built-in max()", "..."],
+  "clean_code": ["Rename lst to numbers", "..."],
+  "overall_summary": "..."
 }
 ```
 
-### ❌ Error Responses
-
-| Status | Cause |
-|--------|-------|
-| `422` | Missing or invalid `code` / `language` field (Pydantic) |
-| `503` | `OPENAI_API_KEY` not set in `.env` |
-| `502` | OpenAI API returned an error |
-| `500` | Model returned malformed JSON |
-
 ---
 
-## 🔌 Available Endpoints
+## 🚀 Deployment
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/` | Health check + readiness flag |
-| POST | `/review` | AI-powered structured code review |
-| GET | `/docs` | Swagger UI |
-| GET | `/redoc` | ReDoc UI |
+### Frontend → Vercel
+
+```bash
+cd frontend
+npm install -g vercel
+vercel --prod
+```
+Set environment variable in Vercel dashboard:
+```
+NEXT_PUBLIC_API_URL=https://your-backend.onrender.com
+```
+
+### Backend → Render
+
+1. Create a new **Web Service** on [render.com](https://render.com)
+2. Root directory: `backend`
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. Add environment variable: `GEMINI_API_KEY=your_key`
 
 ---
 
 ## 🔒 Security Notes
 
-- **Never** commit `.env` — it's in `.gitignore`.
-- In production, replace `allow_origins=["*"]` with your frontend domain.
-- Use environment-specific `.env` files (`.env.production`, etc.) or a secrets manager.
+- Never commit `.env` — it is in `.gitignore`
+- In production, restrict CORS `allow_origins` to your actual frontend domain
+- Use environment secrets (Vercel/Render dashboards) instead of committed files
