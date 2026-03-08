@@ -112,7 +112,7 @@ def root() -> dict:
 #
 @app.post("/review", tags=["Review"])
 @limiter.limit("5/minute")
-def review_code(request: Request, body: CodeReviewRequest):
+async def review_code(request: Request, body: CodeReviewRequest):
     """
     Accepts a code snippet + language, sends it to the LLM, returns a review.
 
@@ -120,7 +120,7 @@ def review_code(request: Request, body: CodeReviewRequest):
     """
     _require_llm()
     try:
-        review = get_code_review(body.language, body.code)
+        review = await get_code_review(body.language, body.code)
         return review
     except RuntimeError as exc:
         logging.error("Review failed (RuntimeError): %s", exc)
@@ -151,7 +151,7 @@ def fetch_github(body: GithubFetchRequest) -> GithubFetchResponse:
 # =============================================================================
 @app.post("/review/pr", tags=["GitHub"])
 @limiter.limit("5/minute")
-def review_pr(request: Request, body: PRReviewRequest):
+async def review_pr(request: Request, body: PRReviewRequest):
     """
     Fetches a GitHub PR's diff, sends it to the LLM for review.
 
@@ -160,7 +160,7 @@ def review_pr(request: Request, body: PRReviewRequest):
     _require_llm()
     diff, pr_title, files_count = fetch_pr_diff(body.pr_url, body.github_token)
     try:
-        review = get_pr_review(diff, pr_title, files_count)
+        review = await get_pr_review(diff, pr_title, files_count)
         return review
     except RuntimeError as exc:
         logging.error("PR review failed (RuntimeError): %s", exc)

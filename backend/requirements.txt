@@ -10,5 +10,6 @@ python-dotenv>=1.0.1
 #  Rate limiting
 slowapi>=0.1.9
 
-#  HTTP client (OpenRouter API + GitHub API)
-requests>=2.31.0
+#  HTTP clients
+requests>=2.31.0           # GitHub API (sync)
+httpx>=0.27.0              # OpenRouter LLM API (async)
