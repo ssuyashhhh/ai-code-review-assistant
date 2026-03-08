@@ -8,29 +8,29 @@ import PRPanel from "../components/PRPanel";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 const LANGUAGES = [
-  { value: "python",     label: "Python" },
+  { value: "python", label: "Python" },
   { value: "javascript", label: "JavaScript" },
   { value: "typescript", label: "TypeScript" },
-  { value: "java",       label: "Java" },
-  { value: "c",          label: "C" },
-  { value: "cpp",        label: "C++" },
-  { value: "csharp",     label: "C#" },
-  { value: "go",         label: "Go" },
-  { value: "rust",       label: "Rust" },
-  { value: "ruby",       label: "Ruby" },
-  { value: "php",        label: "PHP" },
-  { value: "swift",      label: "Swift" },
-  { value: "kotlin",     label: "Kotlin" },
-  { value: "scala",      label: "Scala" },
-  { value: "dart",       label: "Dart" },
-  { value: "r",          label: "R" },
-  { value: "sql",        label: "SQL" },
-  { value: "shell",      label: "Shell/Bash" },
-  { value: "perl",       label: "Perl" },
-  { value: "lua",        label: "Lua" },
-  { value: "haskell",    label: "Haskell" },
-  { value: "html",       label: "HTML" },
-  { value: "css",        label: "CSS" },
+  { value: "java", label: "Java" },
+  { value: "c", label: "C" },
+  { value: "cpp", label: "C++" },
+  { value: "csharp", label: "C#" },
+  { value: "go", label: "Go" },
+  { value: "rust", label: "Rust" },
+  { value: "ruby", label: "Ruby" },
+  { value: "php", label: "PHP" },
+  { value: "swift", label: "Swift" },
+  { value: "kotlin", label: "Kotlin" },
+  { value: "scala", label: "Scala" },
+  { value: "dart", label: "Dart" },
+  { value: "r", label: "R" },
+  { value: "sql", label: "SQL" },
+  { value: "shell", label: "Shell/Bash" },
+  { value: "perl", label: "Perl" },
+  { value: "lua", label: "Lua" },
+  { value: "haskell", label: "Haskell" },
+  { value: "html", label: "HTML" },
+  { value: "css", label: "CSS" },
 ];
 
 const EXT_MAP = {
@@ -62,14 +62,14 @@ const EXT_MAP = {
 // ── Auto-detect language from code content ───────────────────────────────────
 function detectLanguage(code) {
   if (!code || !code.trim()) return null;
-  const s = code.slice(0, 2000); // scan first 2000 chars for speed
+  const s = code.slice(0, 20000); // scan first 2000 chars for speed
 
   // ── Shell / Bash ──────────────────────────────────────────────────────────
-  if (/^#!.*\b(bash|sh|zsh)\b/.test(s))            return "shell";
+  if (/^#!.*\b(bash|sh|zsh)\b/.test(s)) return "shell";
 
   // ── HTML ──────────────────────────────────────────────────────────────────
-  if (/^\s*<!DOCTYPE\s+html/i.test(s))             return "html";
-  if (/^\s*<html[\s>]/i.test(s))                   return "html";
+  if (/^\s*<!DOCTYPE\s+html/i.test(s)) return "html";
+  if (/^\s*<html[\s>]/i.test(s)) return "html";
 
   // ── CSS ───────────────────────────────────────────────────────────────────
   if (/^\s*[.#@][\w-]+\s*\{/m.test(s) && !/\bfunction\b/.test(s)) return "css";
@@ -78,31 +78,31 @@ function detectLanguage(code) {
   if (/^\s*(SELECT|INSERT|UPDATE|DELETE|CREATE\s+TABLE|ALTER\s+TABLE|DROP\s+TABLE)\b/im.test(s)) return "sql";
 
   // ── Rust ──────────────────────────────────────────────────────────────────
-  if (/\bfn\s+\w+\s*\(/.test(s) && /->/.test(s))  return "rust";
-  if (/\blet\s+mut\b/.test(s))                     return "rust";
-  if (/\buse\s+std::/.test(s))                     return "rust";
-  if (/\bprintln!\s*\(/.test(s))                   return "rust";
-  if (/\bimpl\s+\w+/.test(s) && /\bfn\b/.test(s))  return "rust";
+  if (/\bfn\s+\w+\s*\(/.test(s) && /->/.test(s)) return "rust";
+  if (/\blet\s+mut\b/.test(s)) return "rust";
+  if (/\buse\s+std::/.test(s)) return "rust";
+  if (/\bprintln!\s*\(/.test(s)) return "rust";
+  if (/\bimpl\s+\w+/.test(s) && /\bfn\b/.test(s)) return "rust";
 
   // ── Go ────────────────────────────────────────────────────────────────────
-  if (/\bpackage\s+main\b/.test(s))                return "go";
+  if (/\bpackage\s+main\b/.test(s)) return "go";
   if (/\bfunc\s+\w+\s*\(/.test(s) && /\bpackage\b/.test(s)) return "go";
   if (/\bimport\s+\(/.test(s) && /\bfmt\b/.test(s)) return "go";
-  if (/\bfmt\.Print/.test(s))                       return "go";
+  if (/\bfmt\.Print/.test(s)) return "go";
 
   // ── Kotlin ────────────────────────────────────────────────────────────────
-  if (/\bfun\s+main\s*\(/.test(s))                 return "kotlin";
+  if (/\bfun\s+main\s*\(/.test(s)) return "kotlin";
   if (/\bfun\s+\w+\s*\(/.test(s) && /\bval\b/.test(s)) return "kotlin";
   if (/\bprintln\s*\(/.test(s) && /\bfun\b/.test(s)) return "kotlin";
 
   // ── Swift ─────────────────────────────────────────────────────────────────
-  if (/\bimport\s+Foundation\b/.test(s))           return "swift";
-  if (/\bimport\s+UIKit\b/.test(s))                return "swift";
+  if (/\bimport\s+Foundation\b/.test(s)) return "swift";
+  if (/\bimport\s+UIKit\b/.test(s)) return "swift";
   if (/\bfunc\s+\w+\s*\(/.test(s) && /\bvar\b/.test(s) && /->/.test(s)) return "swift";
-  if (/\bguard\s+let\b/.test(s))                   return "swift";
+  if (/\bguard\s+let\b/.test(s)) return "swift";
 
   // ── Dart ──────────────────────────────────────────────────────────────────
-  if (/\bimport\s+'package:/.test(s))              return "dart";
+  if (/\bimport\s+'package:/.test(s)) return "dart";
   if (/\bvoid\s+main\s*\(/.test(s) && /\bprint\s*\(/.test(s) && !/System/.test(s)) return "dart";
 
   // ── Scala ─────────────────────────────────────────────────────────────────
@@ -110,58 +110,58 @@ function detectLanguage(code) {
   if (/\bval\s+\w+\s*:/.test(s) && /\bdef\b/.test(s) && !/\bfun\b/.test(s)) return "scala";
 
   // ── Haskell ───────────────────────────────────────────────────────────────
-  if (/\bmodule\s+Main\b/.test(s))                 return "haskell";
+  if (/\bmodule\s+Main\b/.test(s)) return "haskell";
   if (/\b::\s*\[?[A-Z]\w*/.test(s) && /\bwhere\b/.test(s)) return "haskell";
-  if (/\bmain\s*=\s*do\b/.test(s))                 return "haskell";
+  if (/\bmain\s*=\s*do\b/.test(s)) return "haskell";
 
   // ── R ─────────────────────────────────────────────────────────────────────
-  if (/\blibrary\s*\(/.test(s))                    return "r";
-  if (/<-\s*function\s*\(/.test(s))                return "r";
-  if (/\bdata\.frame\s*\(/.test(s))                 return "r";
+  if (/\blibrary\s*\(/.test(s)) return "r";
+  if (/<-\s*function\s*\(/.test(s)) return "r";
+  if (/\bdata\.frame\s*\(/.test(s)) return "r";
 
   // ── Ruby ──────────────────────────────────────────────────────────────────
-  if (/^#!.*\bruby\b/.test(s))                     return "ruby";
-  if (/\bputs\s+/.test(s) && /\bend\b/.test(s))    return "ruby";
+  if (/^#!.*\bruby\b/.test(s)) return "ruby";
+  if (/\bputs\s+/.test(s) && /\bend\b/.test(s)) return "ruby";
   if (/\bdef\s+\w+/.test(s) && /\bend\b/m.test(s) && !/\bclass\s+\w+.*:/m.test(s)) return "ruby";
   if (/\brequire\s+['"]/.test(s) && /\bend\b/.test(s)) return "ruby";
   if (/\battr_(accessor|reader|writer)\b/.test(s)) return "ruby";
-  if (/\bdo\s*\|/.test(s) && /\bend\b/.test(s))    return "ruby";
-  if (/\bputs\b/.test(s) && /\bdef\b/.test(s))     return "ruby";
-  if (/\.each\s+do\b/.test(s))                     return "ruby";
+  if (/\bdo\s*\|/.test(s) && /\bend\b/.test(s)) return "ruby";
+  if (/\bputs\b/.test(s) && /\bdef\b/.test(s)) return "ruby";
+  if (/\.each\s+do\b/.test(s)) return "ruby";
   if (/\bclass\s+\w+\s*<\s*\w+/.test(s) && /\bend\b/.test(s)) return "ruby";
 
   // ── Perl ──────────────────────────────────────────────────────────────────
-  if (/^#!.*\bperl\b/.test(s))                     return "perl";
-  if (/\buse\s+strict\b/.test(s))                  return "perl";
-  if (/\bmy\s+\$\w+/.test(s))                      return "perl";
+  if (/^#!.*\bperl\b/.test(s)) return "perl";
+  if (/\buse\s+strict\b/.test(s)) return "perl";
+  if (/\bmy\s+\$\w+/.test(s)) return "perl";
 
   // ── Lua ───────────────────────────────────────────────────────────────────
   if (/\blocal\s+\w+\s*=/.test(s) && /\bend\b/.test(s)) return "lua";
   if (/\bfunction\s+\w+\s*\(/.test(s) && /\bend\b/.test(s) && !/\bdef\b/.test(s)) return "lua";
 
   // ── PHP ───────────────────────────────────────────────────────────────────
-  if (/^\s*<\?php/m.test(s))                       return "php";
+  if (/^\s*<\?php/m.test(s)) return "php";
   if (/\$\w+\s*=/.test(s) && /\bfunction\b/.test(s) && /;\s*$/.test(s)) return "php";
 
   // ── C# ────────────────────────────────────────────────────────────────────
-  if (/\busing\s+System\b/.test(s))                return "csharp";
+  if (/\busing\s+System\b/.test(s)) return "csharp";
   if (/\bnamespace\s+\w+/.test(s) && /\bclass\b/.test(s) && /\bvoid\b/.test(s)) return "csharp";
-  if (/\bConsole\.(Write|ReadLine)/.test(s))        return "csharp";
-  if (/\bstring\[\]\s+args\b/.test(s))              return "csharp";
+  if (/\bConsole\.(Write|ReadLine)/.test(s)) return "csharp";
+  if (/\bstring\[\]\s+args\b/.test(s)) return "csharp";
 
   // ── C++ (before C, since C++ is a superset) ───────────────────────────────
-  if (/\busing\s+namespace\b/.test(s))             return "cpp";
-  if (/\bcout\s*<</.test(s))                       return "cpp";
-  if (/\bstd::/.test(s))                           return "cpp";
-  if (/\bcin\s*>>/.test(s))                        return "cpp";
+  if (/\busing\s+namespace\b/.test(s)) return "cpp";
+  if (/\bcout\s*<</.test(s)) return "cpp";
+  if (/\bstd::/.test(s)) return "cpp";
+  if (/\bcin\s*>>/.test(s)) return "cpp";
   if (/\bclass\s+\w+\s*\{/m.test(s) && /\b(public|private|protected)\s*:/.test(s)) return "cpp";
   if (/^\s*#include\s*<\w+>/.test(s) && /\b(cout|cin|vector|string|map)\b/.test(s)) return "cpp";
 
   // ── C ─────────────────────────────────────────────────────────────────────
-  if (/^\s*#include\s*[<"]/.test(s))               return "c";
+  if (/^\s*#include\s*[<"]/.test(s)) return "c";
   if (/\bint\s+main\s*\(/.test(s) && /\bprintf\s*\(/.test(s)) return "c";
   if (/\bprintf\s*\(/.test(s) && /\b(int|char|void)\b/.test(s)) return "c";
-  if (/\bmalloc\s*\(/.test(s))                     return "c";
+  if (/\bmalloc\s*\(/.test(s)) return "c";
 
   // ── TypeScript ────────────────────────────────────────────────────────────
   if (/\binterface\s+\w+\s*\{/.test(s) && !/\bpublic\s+class\b/.test(s)) return "typescript";
@@ -170,27 +170,27 @@ function detectLanguage(code) {
   if (/\benum\s+\w+\s*\{/.test(s) && /\bexport\b/.test(s)) return "typescript";
 
   // ── Java ──────────────────────────────────────────────────────────────────
-  if (/\bpublic\s+class\b/.test(s))                return "java";
-  if (/\bSystem\.out\.print/.test(s))               return "java";
-  if (/\bimport\s+java\./.test(s))                  return "java";
+  if (/\bpublic\s+class\b/.test(s)) return "java";
+  if (/\bSystem\.out\.print/.test(s)) return "java";
+  if (/\bimport\s+java\./.test(s)) return "java";
   if (/\bpublic\s+static\s+void\s+main\b/.test(s)) return "java";
 
   // ── Python ────────────────────────────────────────────────────────────────
-  if (/^\s*def\s+\w+\s*\(/m.test(s))               return "python";
-  if (/^\s*import\s+\w+/m.test(s))                 return "python";
-  if (/^\s*from\s+\w+\s+import\b/m.test(s))        return "python";
-  if (/^\s*class\s+\w+.*:/m.test(s))               return "python";
+  if (/^\s*def\s+\w+\s*\(/m.test(s)) return "python";
+  if (/^\s*import\s+\w+/m.test(s)) return "python";
+  if (/^\s*from\s+\w+\s+import\b/m.test(s)) return "python";
+  if (/^\s*class\s+\w+.*:/m.test(s)) return "python";
   if (/\bprint\s*\(/.test(s) && !/console/.test(s) && !/println/.test(s)) return "python";
-  if (/\bself\./.test(s))                           return "python";
-  if (/\belif\b/.test(s))                           return "python";
+  if (/\bself\./.test(s)) return "python";
+  if (/\belif\b/.test(s)) return "python";
 
   // ── JavaScript (fallback for generic JS patterns) ─────────────────────────
-  if (/\bconsole\.(log|error|warn)\b/.test(s))     return "javascript";
-  if (/\b(const|let|var)\s+\w+\s*=/.test(s))       return "javascript";
+  if (/\bconsole\.(log|error|warn)\b/.test(s)) return "javascript";
+  if (/\b(const|let|var)\s+\w+\s*=/.test(s)) return "javascript";
   if (/\bfunction\s+\w+\s*\(/.test(s) && !/\bdef\b/.test(s)) return "javascript";
-  if (/=>\s*[{(]/.test(s))                         return "javascript";
-  if (/\brequire\s*\(/.test(s))                    return "javascript";
-  if (/\bdocument\./.test(s))                       return "javascript";
+  if (/=>\s*[{(]/.test(s)) return "javascript";
+  if (/\brequire\s*\(/.test(s)) return "javascript";
+  if (/\bdocument\./.test(s)) return "javascript";
 
   return null; // couldn't detect
 }
@@ -456,18 +456,18 @@ main = print (findMax [3, 1, 4, 1, 5, 9])`,
 };
 
 const TABS = [
-  { id: "editor", label: "Editor",  icon: "📝" },
-  { id: "github", label: "GitHub",  icon: "🐙" },
-  { id: "pr",     label: "PR Review", icon: "🔄" },
+  { id: "editor", label: "Editor", icon: "📝" },
+  { id: "github", label: "GitHub", icon: "🐙" },
+  { id: "pr", label: "PR Review", icon: "🔄" },
 ];
 
 export default function Home() {
-  const [tab,      setTab]      = useState("editor");
+  const [tab, setTab] = useState("editor");
   const [language, setLanguage] = useState("python");
-  const [code,     setCode]     = useState(DEFAULT_CODE["python"]);
-  const [review,   setReview]   = useState(null);
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState(null);
+  const [code, setCode] = useState(DEFAULT_CODE["python"]);
+  const [review, setReview] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
 
   // ── Language change (manual override via dropdown) ────────────────────────
@@ -534,7 +534,7 @@ export default function Home() {
     setReview(null);
     try {
       const res = await fetch(`${API_URL}/review`, {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ code, language }),
       });
@@ -555,7 +555,7 @@ export default function Home() {
     setCode(fetchedCode);
     // Accept any language the backend returns; fall back to auto-detect or python
     const knownLang = LANGUAGES.find(l => l.value === fetchedLang);
-    const detected  = detectLanguage(fetchedCode);
+    const detected = detectLanguage(fetchedCode);
     setLanguage(knownLang ? fetchedLang : detected || "python");
     setReview(null);
     setError(null);
@@ -614,11 +614,10 @@ export default function Home() {
                   <button
                     key={t.id}
                     onClick={() => { setTab(t.id); setError(null); }}
-                    className={`flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-medium transition-all ${
-                      tab === t.id
+                    className={`flex items-center gap-1.5 text-sm px-4 py-2 rounded-lg font-medium transition-all ${tab === t.id
                         ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/30"
                         : "text-slate-400 hover:text-slate-200"
-                    }`}
+                      }`}
                   >
                     <span>{t.icon}</span>
                     <span className="hidden sm:inline">{t.label}</span>
@@ -661,7 +660,7 @@ export default function Home() {
 
                   {/* Monaco Editor */}
                   <div className="flex-1 rounded-2xl overflow-hidden border border-border shadow-2xl shadow-black/40"
-                       style={{ minHeight: "500px" }}>
+                    style={{ minHeight: "500px" }}>
                     <div className="flex items-center gap-2 px-4 py-2.5 bg-panel border-b border-border">
                       <div className="flex gap-1.5">
                         <div className="w-3 h-3 rounded-full bg-red-500/80" />
