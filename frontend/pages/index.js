@@ -4,6 +4,7 @@ import CodeEditor from "../components/CodeEditor";
 import ReviewPanel from "../components/ReviewPanel";
 import GitHubPanel from "../components/GitHubPanel";
 import PRPanel from "../components/PRPanel";
+import CPPanel from "../components/CPPanel";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -459,13 +460,58 @@ const TABS = [
   { id: "editor", label: "Editor", icon: "📝" },
   { id: "github", label: "GitHub", icon: "🐙" },
   { id: "pr", label: "PR Review", icon: "🔄" },
+  { id: "cp", label: "CP Debug", icon: "🏆" },
 ];
+
+// ── CP Review Display (inline, used only in index.js) ───────────────────────
+function CPReviewDisplay({ review }) {
+  if (!review) return null;
+
+  const sections = [
+    { icon: "❌", title: "What Is Wrong", content: review.what_is_wrong },
+    { icon: "🔍", title: "Why Incorrect Output", content: review.why_wrong_output },
+    { icon: "🧪", title: "Failing Test Case", content: review.failing_test },
+    { icon: "✅", title: "Correct Approach", content: review.correct_approach },
+  ];
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+        <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+          CP Debug Review
+        </h2>
+        <span className="text-xs text-slate-600 font-mono">
+          {review.model_used} · {review.language}
+        </span>
+      </div>
+      <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4">
+        {sections.map((s, i) => (
+          <div key={i} className="section-card p-5 animate-slide-up">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-3">
+              <span className="text-base">{s.icon}</span>{s.title}
+            </h3>
+            <p className="text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">{s.content || "—"}</p>
+          </div>
+        ))}
+        {review.corrected_code && (
+          <div className="section-card p-5 animate-slide-up">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-3">
+              <span className="text-base">💡</span>Corrected Code
+            </h3>
+            <pre className="text-sm text-emerald-300 bg-surface/50 rounded-lg p-4 overflow-x-auto border border-border font-mono whitespace-pre-wrap">{review.corrected_code}</pre>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export default function Home() {
   const [tab, setTab] = useState("editor");
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState(DEFAULT_CODE["python"]);
   const [review, setReview] = useState(null);
+  const [cpReview, setCpReview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const fileInputRef = useRef(null);
@@ -532,6 +578,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setReview(null);
+    setCpReview(null);
     try {
       const res = await fetch(`${API_URL}/review`, {
         method: "POST",
@@ -687,7 +734,19 @@ export default function Home() {
               {tab === "pr" && (
                 <div className="flex-1 section-card p-6" style={{ minHeight: "500px" }}>
                   <PRPanel
-                    onReviewReceived={(rev) => { setReview(rev); setError(null); }}
+                    onReviewReceived={(rev) => { setReview(rev); setError(null); setCpReview(null); }}
+                    onLoadingChange={setLoading}
+                  />
+                </div>
+              )}
+
+              {/* ── CP DEBUG TAB ────────────────────────────────────────────── */}
+              {tab === "cp" && (
+                <div className="flex-1 section-card p-6" style={{ minHeight: "500px" }}>
+                  <CPPanel
+                    code={code}
+                    language={language}
+                    onReviewReceived={(rev) => { setCpReview(rev); setReview(null); setError(null); }}
                     onLoadingChange={setLoading}
                   />
                 </div>
@@ -696,7 +755,7 @@ export default function Home() {
 
             {/* ── Right Panel — Review Results (scrolls independently) ── */}
             <div className="flex-1 min-w-0 lg:max-w-[50%] overflow-y-auto pr-1">
-              <ReviewPanel review={review} loading={loading} error={error} />
+              {cpReview ? <CPReviewDisplay review={cpReview} /> : <ReviewPanel review={review} loading={loading} error={error} />}
             </div>
 
           </div>

@@ -23,7 +23,7 @@ import logging
 import httpx
 from dotenv import load_dotenv
 
-from models import BugReport, CodeReviewResponse
+from models import BugReport, CodeReviewResponse, CPDebugResponse
 
 # ── Load .env into os.environ ────────────────────────────────────────────────
 # Must happen before reading any environment variables.
@@ -425,3 +425,99 @@ async def get_pr_review(diff: str, pr_title: str, files_count: int) -> CodeRevie
     logger.info("Starting PR review | title=%s | diff_chars=%d", pr_title, len(safe_diff))
     raw = await _call_llm_with_retry(PR_SYSTEM_INSTRUCTION, prompt)
     return _parse_response(raw, "diff", LLM_MODEL, pr_title=pr_title, files_reviewed=files_count)
+
+
+# =============================================================================
+#  Competitive Programming debug system prompt
+# =============================================================================
+
+CP_SYSTEM_INSTRUCTION = """
+You are an expert competitive programming reviewer and debugger.
+
+RESPOND ONLY WITH A VALID JSON OBJECT. No markdown fences, no commentary, no text outside the JSON.
+
+Required JSON schema:
+{
+  "what_is_wrong":    "<clear explanation of the bug(s) in the code>",
+  "why_wrong_output": "<step-by-step trace showing why the code produces incorrect output>",
+  "failing_test":     "<a specific test case (input) that causes the code to fail, with expected vs actual output>",
+  "correct_approach": "<description of the correct algorithm / approach to solve the problem>",
+  "corrected_code":   "<complete, runnable corrected version of the code>"
+}
+
+Rules:
+- Be precise and reference exact variable names, line numbers, and logic errors.
+- The failing_test must be concrete: show input, expected output, and actual output.
+- The corrected_code must be complete and runnable — not a partial snippet.
+- If the code is already correct, say so in what_is_wrong and return the original code as corrected_code.
+- Be concise but thorough.
+""".strip()
+
+
+# =============================================================================
+#  Public: debug a competitive programming solution (async)
+# =============================================================================
+
+async def get_cp_review(
+    language: str,
+    code: str,
+    problem: str,
+    sample_input: str,
+    expected_output: str,
+    actual_output: str,
+) -> CPDebugResponse:
+    """
+    Reviews a competitive programming solution.
+    Provides: what's wrong, why wrong output, failing test, correct approach, corrected code.
+    """
+    safe_code = _truncate_code(code)
+    prompt = (
+        f"Problem Description:\n{problem}\n\n"
+        f"User Code ({language}):\n```{language}\n{safe_code}\n```\n\n"
+        f"Sample Input:\n{sample_input}\n\n"
+        f"Expected Output:\n{expected_output}\n\n"
+        f"Actual Output:\n{actual_output}\n\n"
+        f"Explain:\n"
+        f"1. What is wrong in the code\n"
+        f"2. Why it produces incorrect output\n"
+        f"3. Provide a failing test case\n"
+        f"4. Suggest the correct approach\n"
+        f"5. Provide a complete corrected version of the code"
+    )
+    logger.info(
+        "Starting CP debug review | model=%s | language=%s | code_chars=%d",
+        LLM_MODEL, language, len(code),
+    )
+    raw = await _call_llm_with_retry(CP_SYSTEM_INSTRUCTION, prompt)
+    return _parse_cp_response(raw, language, LLM_MODEL)
+
+
+# =============================================================================
+#  Helper: parse CP debug response
+# =============================================================================
+
+def _parse_cp_response(raw: str, language: str, model: str) -> CPDebugResponse:
+    """Parses the raw JSON string from the LLM into a CPDebugResponse."""
+    cleaned = raw.strip()
+    if cleaned.startswith("```"):
+        first_newline = cleaned.index("\n") if "\n" in cleaned else len(cleaned)
+        cleaned = cleaned[first_newline + 1:]
+    if cleaned.endswith("```"):
+        cleaned = cleaned[:-3]
+    cleaned = cleaned.strip()
+
+    try:
+        data: dict = json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        logger.error("Invalid JSON from LLM (CP): %s\nRaw:\n%s", exc, raw[:500])
+        raise RuntimeError("Model returned invalid JSON.") from exc
+
+    return CPDebugResponse(
+        language=language,
+        model_used=model,
+        what_is_wrong=data.get("what_is_wrong", ""),
+        why_wrong_output=data.get("why_wrong_output", ""),
+        failing_test=data.get("failing_test", ""),
+        correct_approach=data.get("correct_approach", ""),
+        corrected_code=data.get("corrected_code", ""),
+    )

@@ -77,3 +77,29 @@ class PRReviewRequest(BaseModel):
     """Incoming body for POST /review/pr."""
     pr_url:       str        = Field(..., description="https://github.com/owner/repo/pull/123")
     github_token: str | None = Field(None, description="PAT for private repos (optional).")
+
+
+# =============================================================================
+#  Competitive Programming Debug
+# =============================================================================
+
+class CPDebugRequest(BaseModel):
+    """Incoming body for POST /review/cp."""
+    code:            str        = Field(..., min_length=1, description="User's solution code.")
+    language:        str        = Field(..., min_length=1, description="Programming language.")
+    problem:         str        = Field(..., min_length=1, description="Problem statement / description.")
+    sample_input:    str        = Field("", description="Sample input.")
+    expected_output: str        = Field("", description="Expected output for the sample input.")
+    actual_output:   str        = Field("", description="Actual output the code produces.")
+
+
+class CPDebugResponse(BaseModel):
+    """Structured response from the CP debug reviewer."""
+    status:           str            = "success"
+    language:         str
+    model_used:       str
+    what_is_wrong:    str            = Field("", description="Explanation of what is wrong in the code.")
+    why_wrong_output: str            = Field("", description="Why the code produces incorrect output.")
+    failing_test:     str            = Field("", description="A failing test case.")
+    correct_approach: str            = Field("", description="Suggested correct approach.")
+    corrected_code:   str            = Field("", description="Full corrected code.")

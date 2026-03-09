@@ -11,6 +11,7 @@ A full-stack production-ready application that lets you paste code, send it to *
 - 📁 **File Upload** — upload `.py`, `.cpp`, `.js`, `.java` files directly
 - 🐙 **GitHub File Review** — paste a GitHub blob URL to fetch and review any file
 - 🔄 **PR Review Bot** — submit a GitHub Pull Request URL for AI-powered diff review
+- 🏆 **CP Debugger** — debug competitive programming solutions with problem context, I/O, and failing test cases
 - 💡 **Optimized Code** — AI generates a complete rewritten version with all fixes applied
 - 🛡️ **Rate Limiting** — 5 requests/minute per IP via SlowAPI
 - 🔁 **Retry Logic** — auto-retries on 429 errors (3 retries, 5s delay)
@@ -36,7 +37,8 @@ ai-code-review-assistant/
     │   ├── CodeEditor.jsx    # Monaco editor (VS Code)
     │   ├── ReviewPanel.jsx   # Structured review display
     │   ├── GitHubPanel.jsx   # GitHub file fetch UI
-    │   └── PRPanel.jsx       # Pull request review UI
+    │   ├── PRPanel.jsx       # Pull request review UI
+    │   └── CPPanel.jsx       # Competitive programming debug UI
     ├── pages/
     │   ├── _app.js
     │   └── index.js          # Main split-pane layout
@@ -125,7 +127,7 @@ Open **http://localhost:3000** in your browser.
 ## 🧪 How to Use
 
 1. Paste or write code in the Monaco editor (language is auto-detected)
-2. Or **upload a file**, **load from GitHub**, or **submit a PR URL**
+2. Or **upload a file**, **load from GitHub**, **submit a PR URL**, or **debug a CP solution**
 3. Click **⚡ Analyze Code**
 4. View the AI review:
    - 🐛 **Bug Detection** — with severity (high/medium/low) and fix suggestions
@@ -176,6 +178,32 @@ Open **http://localhost:3000** in your browser.
 **Request:**
 ```json
 { "pr_url": "https://github.com/owner/repo/pull/123", "github_token": null }
+```
+
+### `POST /review/cp` *(rate limited: 5/min)*
+**Request:**
+```json
+{
+  "code": "def solve(n): ...",
+  "language": "python",
+  "problem": "Given N, find the sum of 1 to N.",
+  "sample_input": "5",
+  "expected_output": "15",
+  "actual_output": "10"
+}
+```
+**Response:**
+```json
+{
+  "status": "success",
+  "language": "python",
+  "model_used": "deepseek/deepseek-chat",
+  "what_is_wrong": "Off-by-one error in the loop range...",
+  "why_wrong_output": "The loop runs from 1 to n-1 instead of 1 to n...",
+  "failing_test": "Input: 5 \u2192 Expected: 15, Actual: 10",
+  "correct_approach": "Use range(1, n+1) or the formula n*(n+1)//2",
+  "corrected_code": "def solve(n): return sum(range(1, n+1))"
+}
 ```
 
 ---

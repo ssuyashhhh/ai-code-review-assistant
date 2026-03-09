@@ -8,6 +8,7 @@ Endpoints:
   • POST /review       → analyse a code snippet (rate limited: 5 req/min/IP)
   • POST /fetch/github → fetch a file from a GitHub blob URL
   • POST /review/pr    → review a GitHub Pull Request diff
+  • POST /review/cp    → debug a competitive programming solution
 
 Security features:
   • SlowAPI rate limiting (5 req/min per IP on /review)
@@ -38,9 +39,9 @@ from slowapi.errors import RateLimitExceeded
 from models import (
     CodeReviewRequest, CodeReviewResponse,
     GithubFetchRequest, GithubFetchResponse,
-    PRReviewRequest,
+    PRReviewRequest, CPDebugRequest,
 )
-from llm_service import get_code_review, get_pr_review, LLM_MODEL, OPENROUTER_API_KEY
+from llm_service import get_code_review, get_pr_review, get_cp_review, LLM_MODEL, OPENROUTER_API_KEY
 from github_service import fetch_github_file, fetch_pr_diff
 
 
@@ -170,6 +171,42 @@ async def review_pr(request: Request, body: PRReviewRequest):
         )
     except Exception as exc:
         logging.error("PR review failed (unexpected): %s", exc)
+        return JSONResponse(
+            status_code=502,
+            content={"status": "error", "message": "LLM request failed"},
+        )
+
+
+# =============================================================================
+#  POST /review/cp — debug a competitive programming solution (RATE LIMITED)
+# =============================================================================
+@app.post("/review/cp", tags=["Review"])
+@limiter.limit("5/minute")
+async def review_cp(request: Request, body: CPDebugRequest):
+    """
+    Accepts a CP solution + problem description, sends it to the LLM for debugging.
+
+    Rate limit: 5 requests per minute per client IP.
+    """
+    _require_llm()
+    try:
+        review = await get_cp_review(
+            body.language,
+            body.code,
+            body.problem,
+            body.sample_input,
+            body.expected_output,
+            body.actual_output,
+        )
+        return review
+    except RuntimeError as exc:
+        logging.error("CP review failed (RuntimeError): %s", exc)
+        return JSONResponse(
+            status_code=502,
+            content={"status": "error", "message": str(exc)},
+        )
+    except Exception as exc:
+        logging.error("CP review failed (unexpected): %s", exc)
         return JSONResponse(
             status_code=502,
             content={"status": "error", "message": "LLM request failed"},
