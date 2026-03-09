@@ -434,6 +434,15 @@ async def get_pr_review(diff: str, pr_title: str, files_count: int) -> CodeRevie
 CP_SYSTEM_INSTRUCTION = """
 You are an expert competitive programming reviewer and debugger.
 
+You are given:
+1. The problem statement
+2. The user's code
+3. Sample I/O (expected vs actual)
+4. **Code Execution Results** — the REAL output from running the code (trust this over the user's claimed output)
+5. **Static Analysis** — automated pattern-based warnings about the code
+
+Use ALL THREE sources (execution, static analysis, and your own reasoning) to provide the most accurate diagnosis.
+
 RESPOND ONLY WITH A VALID JSON OBJECT. No markdown fences, no commentary, no text outside the JSON.
 
 Required JSON schema:
@@ -446,6 +455,8 @@ Required JSON schema:
 }
 
 Rules:
+- When execution results are available, use the REAL output — it's ground truth.
+- Cross-reference static analysis warnings with your own reasoning.
 - Be precise and reference exact variable names, line numbers, and logic errors.
 - The failing_test must be concrete: show input, expected output, and actual output.
 - The corrected_code must be complete and runnable — not a partial snippet.
@@ -465,28 +476,60 @@ async def get_cp_review(
     sample_input: str,
     expected_output: str,
     actual_output: str,
+    execution_stdout: str = "",
+    execution_stderr: str = "",
+    execution_status: str = "",
+    static_analysis_text: str = "",
 ) -> CPDebugResponse:
     """
-    Reviews a competitive programming solution.
-    Provides: what's wrong, why wrong output, failing test, correct approach, corrected code.
+    Reviews a competitive programming solution using all three signals:
+    1. Code execution results (ground truth)
+    2. Static analysis warnings
+    3. LLM reasoning
+
+    Returns a CPDebugResponse with all fields populated.
     """
     safe_code = _truncate_code(code)
-    prompt = (
-        f"Problem Description:\n{problem}\n\n"
-        f"User Code ({language}):\n```{language}\n{safe_code}\n```\n\n"
-        f"Sample Input:\n{sample_input}\n\n"
-        f"Expected Output:\n{expected_output}\n\n"
-        f"Actual Output:\n{actual_output}\n\n"
-        f"Explain:\n"
-        f"1. What is wrong in the code\n"
-        f"2. Why it produces incorrect output\n"
-        f"3. Provide a failing test case\n"
-        f"4. Suggest the correct approach\n"
-        f"5. Provide a complete corrected version of the code"
+
+    # Build a rich prompt with all three data sources
+    prompt_parts = [
+        f"Problem Description:\n{problem}",
+        f"\nUser Code ({language}):\n```{language}\n{safe_code}\n```",
+        f"\nSample Input:\n{sample_input}" if sample_input else "",
+        f"\nExpected Output:\n{expected_output}" if expected_output else "",
+    ]
+
+    # Execution results (ground truth)
+    if execution_status:
+        prompt_parts.append(f"\n--- Code Execution Results (ground truth) ---")
+        prompt_parts.append(f"Execution Status: {execution_status}")
+        if execution_stdout:
+            prompt_parts.append(f"Actual stdout:\n{execution_stdout}")
+        if execution_stderr:
+            prompt_parts.append(f"Stderr:\n{execution_stderr}")
+        if actual_output and execution_stdout.strip() != actual_output.strip():
+            prompt_parts.append(f"(User-reported actual output: {actual_output})")
+    elif actual_output:
+        prompt_parts.append(f"\nActual Output (user-reported, not verified):\n{actual_output}")
+
+    # Static analysis
+    if static_analysis_text:
+        prompt_parts.append(f"\n--- {static_analysis_text} ---")
+
+    prompt_parts.append(
+        "\nUsing the execution results, static analysis, and your own reasoning, explain:\n"
+        "1. What is wrong in the code\n"
+        "2. Why it produces incorrect output\n"
+        "3. Provide a failing test case\n"
+        "4. Suggest the correct approach\n"
+        "5. Provide a complete corrected version of the code"
     )
+
+    prompt = "\n".join(p for p in prompt_parts if p)
+
     logger.info(
-        "Starting CP debug review | model=%s | language=%s | code_chars=%d",
-        LLM_MODEL, language, len(code),
+        "Starting CP debug review | model=%s | language=%s | code_chars=%d | has_execution=%s | has_analysis=%s",
+        LLM_MODEL, language, len(code), bool(execution_status), bool(static_analysis_text),
     )
     raw = await _call_llm_with_retry(CP_SYSTEM_INSTRUCTION, prompt)
     return _parse_cp_response(raw, language, LLM_MODEL)

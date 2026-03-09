@@ -135,14 +135,15 @@ export default function CPPanel({ code, language, onReviewReceived, onLoadingCha
 
       {/* Info */}
       <div className="rounded-xl border border-border bg-surface/30 p-4 mt-auto">
-        <p className="text-xs text-slate-500 font-medium mb-2">How it works:</p>
+        <p className="text-xs text-slate-500 font-medium mb-2">Three-layer analysis pipeline:</p>
         <ul className="text-xs text-slate-600 flex flex-col gap-1.5">
-          <li>✓ Analyzes your code from the Editor tab</li>
-          <li>✓ Identifies logical bugs &amp; edge cases</li>
-          <li>✓ Explains why your output is wrong</li>
-          <li>✓ Provides a failing test case</li>
-          <li>✓ Suggests the correct approach &amp; corrected code</li>
+          <li>⚙️ <strong className="text-slate-400">Code Execution</strong> — runs your code with sample input for ground truth</li>
+          <li>🔬 <strong className="text-slate-400">Static Analysis</strong> — detects off-by-one, overflow, complexity issues</li>
+          <li>🧠 <strong className="text-slate-400">LLM Reasoning</strong> — DeepSeek uses all data to diagnose the bug</li>
         </ul>
+        <p className="text-xs text-slate-600 mt-2">
+          Execution supported for: Python, C++, C, JavaScript, Java.
+        </p>
       </div>
     </div>
   );

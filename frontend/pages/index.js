@@ -467,6 +467,9 @@ const TABS = [
 function CPReviewDisplay({ review }) {
   if (!review) return null;
 
+  const execOk = review.execution_status === "success";
+  const execSkipped = review.execution_status?.startsWith("skipped");
+
   const sections = [
     { icon: "❌", title: "What Is Wrong", content: review.what_is_wrong },
     { icon: "🔍", title: "Why Incorrect Output", content: review.why_wrong_output },
@@ -485,6 +488,67 @@ function CPReviewDisplay({ review }) {
         </span>
       </div>
       <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-4">
+
+        {/* Pipeline status badges */}
+        <div className="flex flex-wrap gap-2">
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+            execSkipped ? "bg-slate-500/15 text-slate-400 border-slate-500/30"
+            : execOk ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+            : "bg-red-500/15 text-red-400 border-red-500/30"
+          }`}>
+            ⚙️ Execution: {execSkipped ? "Skipped" : execOk ? "Ran" : review.execution_status || "N/A"}
+          </span>
+          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+            review.static_analysis?.length
+              ? "bg-amber-500/15 text-amber-400 border-amber-500/30"
+              : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+          }`}>
+            🔬 Static Analysis: {review.static_analysis?.length || 0} warnings
+          </span>
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full border bg-indigo-500/15 text-indigo-400 border-indigo-500/30">
+            🧠 LLM Reasoning
+          </span>
+        </div>
+
+        {/* Execution output */}
+        {!execSkipped && (review.execution_stdout || review.execution_stderr) && (
+          <div className="section-card p-5 animate-slide-up">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-3">
+              <span className="text-base">⚙️</span>Code Execution Output
+            </h3>
+            {review.execution_stdout && (
+              <div className="mb-2">
+                <span className="text-[10px] uppercase text-slate-500 font-medium">stdout</span>
+                <pre className="text-sm text-emerald-300 bg-surface/50 rounded-lg p-3 mt-1 overflow-x-auto border border-border font-mono whitespace-pre-wrap">{review.execution_stdout}</pre>
+              </div>
+            )}
+            {review.execution_stderr && (
+              <div>
+                <span className="text-[10px] uppercase text-slate-500 font-medium">stderr</span>
+                <pre className="text-sm text-red-300 bg-surface/50 rounded-lg p-3 mt-1 overflow-x-auto border border-border font-mono whitespace-pre-wrap">{review.execution_stderr}</pre>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Static analysis warnings */}
+        {review.static_analysis?.length > 0 && (
+          <div className="section-card p-5 animate-slide-up">
+            <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-3">
+              <span className="text-base">🔬</span>Static Analysis ({review.static_analysis.length} warnings)
+            </h3>
+            <ul className="flex flex-col gap-2">
+              {review.static_analysis.map((w, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-amber-300/80 bg-amber-500/5 rounded-lg p-3 border border-amber-500/10 font-mono">
+                  <span className="mt-0.5 shrink-0">⚠️</span>
+                  <span className="leading-relaxed">{w}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* LLM reasoning sections */}
         {sections.map((s, i) => (
           <div key={i} className="section-card p-5 animate-slide-up">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-300 mb-3">

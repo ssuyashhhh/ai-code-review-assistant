@@ -98,6 +98,13 @@ class CPDebugResponse(BaseModel):
     status:           str            = "success"
     language:         str
     model_used:       str
+    # Execution results
+    execution_stdout: str            = Field("", description="Actual stdout from running the code.")
+    execution_stderr: str            = Field("", description="Stderr / error output from running the code.")
+    execution_status: str            = Field("", description="Execution status: success, error, timeout, skipped.")
+    # Static analysis
+    static_analysis:  list[str]      = Field(default_factory=list, description="Static analysis warnings.")
+    # LLM reasoning
     what_is_wrong:    str            = Field("", description="Explanation of what is wrong in the code.")
     why_wrong_output: str            = Field("", description="Why the code produces incorrect output.")
     failing_test:     str            = Field("", description="A failing test case.")

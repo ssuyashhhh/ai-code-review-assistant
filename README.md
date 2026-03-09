@@ -11,7 +11,10 @@ A full-stack production-ready application that lets you paste code, send it to *
 - 📁 **File Upload** — upload `.py`, `.cpp`, `.js`, `.java` files directly
 - 🐙 **GitHub File Review** — paste a GitHub blob URL to fetch and review any file
 - 🔄 **PR Review Bot** — submit a GitHub Pull Request URL for AI-powered diff review
-- 🏆 **CP Debugger** — debug competitive programming solutions with problem context, I/O, and failing test cases
+- 🏆 **CP Debugger** — three-layer competitive programming debugger:
+  - ⚙️ **Code Execution** — runs code with sample input for ground truth output
+  - 🔬 **Static Analysis** — detects off-by-one, overflow, complexity issues
+  - 🧠 **LLM Reasoning** — DeepSeek uses all data to diagnose the bug
 - 💡 **Optimized Code** — AI generates a complete rewritten version with all fixes applied
 - 🛡️ **Rate Limiting** — 5 requests/minute per IP via SlowAPI
 - 🔁 **Retry Logic** — auto-retries on 429 errors (3 retries, 5s delay)
@@ -28,6 +31,8 @@ ai-code-review-assistant/
 │   ├── main.py            # FastAPI app + rate-limited endpoints
 │   ├── llm_service.py     # OpenRouter/DeepSeek API client + retry logic
 │   ├── github_service.py  # GitHub file fetch + PR diff extraction
+│   ├── code_executor.py   # Sandboxed code execution (Python, C++, C, JS, Java)
+│   ├── static_analyzer.py # Pattern-based static analysis for CP bugs
 │   ├── models.py          # Pydantic request/response schemas
 │   ├── requirements.txt
 │   ├── .env               # Your secrets (not committed)

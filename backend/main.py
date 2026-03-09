@@ -43,6 +43,8 @@ from models import (
 )
 from llm_service import get_code_review, get_pr_review, get_cp_review, LLM_MODEL, OPENROUTER_API_KEY
 from github_service import fetch_github_file, fetch_pr_diff
+from code_executor import execute_code
+from static_analyzer import analyze as static_analyze, format_for_prompt as format_analysis
 
 
 # =============================================================================
@@ -184,12 +186,33 @@ async def review_pr(request: Request, body: PRReviewRequest):
 @limiter.limit("5/minute")
 async def review_cp(request: Request, body: CPDebugRequest):
     """
-    Accepts a CP solution + problem description, sends it to the LLM for debugging.
+    Debugs a competitive programming solution using three signals:
+    1. Code Execution — runs the code with sample input (ground truth)
+    2. Static Analysis — pattern-based detection of common CP bugs
+    3. LLM Reasoning — DeepSeek analyzes everything together
 
     Rate limit: 5 requests per minute per client IP.
     """
     _require_llm()
     try:
+        # ── Step 1: Execute the code with sample input ───────────────
+        exec_result = execute_code(body.language, body.code, body.sample_input)
+        if exec_result.executed:
+            execution_status = "success" if not exec_result.error else exec_result.error
+            if exec_result.timed_out:
+                execution_status = "Time Limit Exceeded"
+        else:
+            execution_status = f"skipped: {exec_result.error}" if exec_result.error else "skipped"
+
+        # ── Step 2: Run static analysis ──────────────────────────────
+        analysis = static_analyze(body.language, body.code)
+        analysis_text = format_analysis(analysis)
+        analysis_warnings = [
+            f"[{w.severity.upper()}] Line {w.line or '?'} — {w.category}: {w.message}"
+            for w in analysis.warnings
+        ]
+
+        # ── Step 3: LLM reasoning (with execution + analysis context) ─
         review = await get_cp_review(
             body.language,
             body.code,
@@ -197,7 +220,18 @@ async def review_cp(request: Request, body: CPDebugRequest):
             body.sample_input,
             body.expected_output,
             body.actual_output,
+            execution_stdout=exec_result.stdout,
+            execution_stderr=exec_result.stderr,
+            execution_status=execution_status,
+            static_analysis_text=analysis_text,
         )
+
+        # Attach execution + analysis results to the response
+        review.execution_stdout = exec_result.stdout
+        review.execution_stderr = exec_result.stderr
+        review.execution_status = execution_status
+        review.static_analysis = analysis_warnings
+
         return review
     except RuntimeError as exc:
         logging.error("CP review failed (RuntimeError): %s", exc)
